@@ -3,7 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from lunar_python import Solar
 import math
-import datetime # 引入时间处理库，专门解决跨天问题
+import datetime
 
 # --- 网页配置 ---
 st.set_page_config(page_title="八字运势分析系统", layout="centered")
@@ -40,8 +40,7 @@ class BaziLogic:
         return None
 
     def get_bazi(self, year, month, day, hour):
-        # 【核心修正】：晚子时自动换日
-        # 如果 hour >= 23，利用 datetime 自动加一天，hour 变为 0
+        # 晚子时自动换日
         if hour >= 23:
             dt = datetime.datetime(year, month, day, 0, 0, 0) + datetime.timedelta(days=1)
             year = dt.year
@@ -66,7 +65,6 @@ class BaziLogic:
         month_wx = self.ZHI_WX[month_zhi]
         parent_wx = self.get_parent_wx(me_wx)
         
-        # 强弱打分
         score = 0
         if month_wx == me_wx: score += 50
         elif month_wx == parent_wx: score += 50
@@ -82,20 +80,17 @@ class BaziLogic:
             
         is_strong = score >= 50
         
-        # 初始喜忌
         if is_strong:
-            ke_me = [k for k,v in self.KE.items() if v == me_wx][0] # 官杀
-            wo_sheng = self.SHENG[me_wx] # 食伤
-            wo_ke = self.KE[me_wx]       # 财
+            ke_me = [k for k,v in self.KE.items() if v == me_wx][0]
+            wo_sheng = self.SHENG[me_wx]
+            wo_ke = self.KE[me_wx]
             fav = [ke_me, wo_sheng, wo_ke]
             unfav = [me_wx, parent_wx]
         else:
             fav = [parent_wx, me_wx]
             unfav = [k for k in "金木水火土" if k not in fav]
             
-        # 调候 (冬木修正)
         info_msg = ""
-        # 甲/乙木 生于 亥/子/丑月
         if me_wx == "木" and month_zhi in ["亥", "子", "丑"]:
             info_msg = "❄️ 调候提示：检测到【冬木】，喜火暖局，忌金生水寒。"
             if "金" in fav: fav.remove("金")
@@ -112,31 +107,33 @@ class BaziLogic:
         elif g_wx in unfav: score -= 10
         if z_wx in fav: score += 25
         elif z_wx in unfav: score -= 20
-        # 简单刑冲
         if day_zhi == '午' and year_zhi == '子': score -= 15
         if day_zhi == '巳' and year_zhi == '亥': score -= 10
         
         return max(10, min(100, score))
 
 # ==========================================
-#          网页界面 (UI)
+#          网页界面 (UI) - 改为全展开布局
 # ==========================================
 
-with st.sidebar:
-    st.header("1. 输入出生信息")
-    st.warning("⚠️ 请务必输入【阳历 (公历)】时间！")
-    
-    in_year = st.number_input("出生年份", min_value=1900, max_value=2050, value=2000)
-    in_month = st.number_input("出生月份", min_value=1, max_value=12, value=1)
-    in_day = st.number_input("出生日期", min_value=1, max_value=31, value=1)
-    in_hour = st.number_input("出生小时 (0-23)", min_value=0, max_value=23, value=0)
-    
-    st.header("2. 分析设置")
-    max_age = st.slider("分析年限 (岁)", 10, 100, 60)
-    
-    run_btn = st.button("🚀 开始排盘分析", type="primary")
+st.subheader("1. 请输入出生时间 (公历)")
+
+# 使用列布局，让输入框紧凑排列
+c1, c2 = st.columns(2)
+with c1:
+    in_year = st.number_input("年份", min_value=1900, max_value=2050, value=2000)
+    in_day = st.number_input("日期", min_value=1, max_value=31, value=1)
+with c2:
+    in_month = st.number_input("月份", min_value=1, max_value=12, value=1)
+    in_hour = st.number_input("小时 (0-23)", min_value=0, max_value=23, value=0)
+
+st.write("") # 增加一点空隙
+max_age = st.slider("分析未来多少年？", 10, 100, 60)
+
+run_btn = st.button("🚀 开始排盘分析", type="primary", use_container_width=True)
 
 if run_btn:
+    st.markdown("---")
     logic = BaziLogic()
     pillars = logic.get_bazi(in_year, in_month, in_day, in_hour)
     
@@ -161,26 +158,20 @@ if run_btn:
     ages, scores, labels = [], [], []
     gan_list, zhi_list = [], []
     
-    progress_bar = st.progress(0)
-    
-    for i in range(max_age):
-        year = in_year + i
-        age = i + 1
-        
-        temp = Solar.fromYmdHms(year, 6, 1, 12, 0, 0).getLunar()
-        ln_gan, ln_zhi = temp.getYearGan(), temp.getYearZhi()
-        
-        final_score = logic.calc_score(ln_gan, ln_zhi, day_zhi, fav, unfav)
-        
-        ages.append(age)
-        scores.append(final_score)
-        labels.append(f"{year}\n{ln_gan}{ln_zhi}")
-        gan_list.append(ln_gan)
-        zhi_list.append(ln_zhi)
-        
-        progress_bar.progress((i + 1) / max_age)
-        
-    progress_bar.empty() 
+    # 模拟计算过程
+    with st.spinner('正在推算未来运势...'):
+        for i in range(max_age):
+            year = in_year + i
+            age = i + 1
+            temp = Solar.fromYmdHms(year, 6, 1, 12, 0, 0).getLunar()
+            ln_gan, ln_zhi = temp.getYearGan(), temp.getYearZhi()
+            final_score = logic.calc_score(ln_gan, ln_zhi, day_zhi, fav, unfav)
+            
+            ages.append(age)
+            scores.append(final_score)
+            labels.append(f"{year}\n{ln_gan}{ln_zhi}")
+            gan_list.append(ln_gan)
+            zhi_list.append(ln_zhi)
     
     st.subheader("📈 人生运势起伏图")
     
@@ -210,6 +201,3 @@ if run_btn:
             "评价": ["大吉 🔥" if s >= 85 else "吉" if s >= 70 else "凶 🌧" if s <= 40 else "平" for s in scores]
         }
         st.dataframe(data)
-
-else:
-    st.info("👈 请在左侧侧边栏输入出生时间，然后点击“开始排盘分析”")

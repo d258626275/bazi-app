@@ -107,27 +107,31 @@ class BaziLogic:
         elif g_wx in unfav: score -= 10
         if z_wx in fav: score += 25
         elif z_wx in unfav: score -= 20
+        # 简单刑冲
         if day_zhi == '午' and year_zhi == '子': score -= 15
         if day_zhi == '巳' and year_zhi == '亥': score -= 10
         
         return max(10, min(100, score))
 
 # ==========================================
-#          网页界面 (UI) - 改为全展开布局
+#          网页界面 (UI) - 四列横排布局
 # ==========================================
 
 st.subheader("1. 请输入出生时间 (公历)")
 
-# 使用列布局，让输入框紧凑排列
-c1, c2 = st.columns(2)
+# 【修改】使用4列布局，顺序：年 -> 月 -> 日 -> 时
+c1, c2, c3, c4 = st.columns(4)
+
 with c1:
     in_year = st.number_input("年份", min_value=1900, max_value=2050, value=2000)
-    in_day = st.number_input("日期", min_value=1, max_value=31, value=1)
 with c2:
     in_month = st.number_input("月份", min_value=1, max_value=12, value=1)
+with c3:
+    in_day = st.number_input("日期", min_value=1, max_value=31, value=1)
+with c4:
     in_hour = st.number_input("小时 (0-23)", min_value=0, max_value=23, value=0)
 
-st.write("") # 增加一点空隙
+st.write("") 
 max_age = st.slider("分析未来多少年？", 10, 100, 60)
 
 run_btn = st.button("🚀 开始排盘分析", type="primary", use_container_width=True)
@@ -158,7 +162,6 @@ if run_btn:
     ages, scores, labels = [], [], []
     gan_list, zhi_list = [], []
     
-    # 模拟计算过程
     with st.spinner('正在推算未来运势...'):
         for i in range(max_age):
             year = in_year + i

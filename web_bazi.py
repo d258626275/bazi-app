@@ -211,10 +211,11 @@ if run_btn:
             "评价": ["大吉 🔥" if s >= 85 else "吉" if s >= 70 else "凶 🌧" if s <= 40 else "平" for s in scores]
         }
         st.dataframe(data)
+    st.markdown("---")
+    st.markdown("### 📊 站长统计")
+    st.markdown("![Visitor Count](https://profile-counter.glitch.me/bazi-app/count.svg)") 
+    # 注意：把链接里的 bazi-app 换成你 GitHub 仓库的名字，这样统计才准
 
 
-st.markdown("---")
-st.markdown("### 📊 站长统计")
-st.markdown("![Visitor Count](https://profile-counter.glitch.me/bazi-app/count.svg)") 
-# 注意：把链接里的 bazi-app 换成你 GitHub 仓库的名字，这样统计才准
+
 

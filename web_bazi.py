@@ -114,22 +114,29 @@ class BaziLogic:
         return max(10, min(100, score))
 
 # ==========================================
-#          网页界面 (UI) - 四列横排布局
+#          网页界面 (UI) - 优化移动端排序
 # ==========================================
 
 st.subheader("1. 请输入出生时间 (公历)")
 
-# 【修改】使用4列布局，顺序：年 -> 月 -> 日 -> 时
-c1, c2, c3, c4 = st.columns(4)
+# 【布局修正】
+# 使用 2x2 布局，确保手机端垂直堆叠时顺序正确：
+# 电脑：[年][月]  手机：[年]
+#      [日][时]       [月]
+#                    [日]
+#                    [时]
 
+c1, c2 = st.columns(2)
 with c1:
-    in_year = st.number_input("年份", min_value=1900, max_value=2050, value=2000)
+    in_year = st.number_input("年份", 1900, 2050, 2000)
 with c2:
-    in_month = st.number_input("月份", min_value=1, max_value=12, value=1)
+    in_month = st.number_input("月份", 1, 12, 1)
+
+c3, c4 = st.columns(2)
 with c3:
-    in_day = st.number_input("日期", min_value=1, max_value=31, value=1)
+    in_day = st.number_input("日期", 1, 31, 1)
 with c4:
-    in_hour = st.number_input("小时 (0-23)", min_value=0, max_value=23, value=0)
+    in_hour = st.number_input("小时 (0-23)", 0, 23, 0)
 
 st.write("") 
 max_age = st.slider("分析未来多少年？", 10, 100, 60)
